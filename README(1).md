@@ -8,6 +8,7 @@
 ![Nginx](https://img.shields.io/badge/Nginx-1.28.x-009639?logo=nginx&logoColor=white)
 ![PHP](https://img.shields.io/badge/PHP-7.4-777BB4?logo=php&logoColor=white)
 ![Laravel](https://img.shields.io/badge/Laravel-PHP%20Framework-FF2D20?logo=laravel&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-8.x-4479A1?logo=mysql&logoColor=white)
 
 ---
 
@@ -17,6 +18,7 @@ This documentation records the deployment process in the same order used during 
 
 - OS: Ubuntu 26.04
 - Web Server: Nginx
+- Database: MySQL
 - PHP: 7.4
 - PHP-FPM: 7.4
 - Framework: Laravel
@@ -83,7 +85,58 @@ nginx/1.28.3
 
 ---
 
-# 3️⃣ Install PHP Repository Dependencies
+# 3️⃣ 🗄️ Install MySQL
+
+Install MySQL Server:
+
+```bash
+sudo apt-get update
+sudo apt-get install mysql-server
+```
+
+Run the MySQL security configuration:
+
+```bash
+sudo mysql_secure_installation
+```
+
+Check MySQL service status:
+
+```bash
+sudo systemctl status mysql --no-pager
+```
+
+Enable MySQL at boot:
+
+```bash
+sudo systemctl enable mysql
+```
+
+---
+
+# 4️⃣ 🗃️ Create the Laravel MySQL Database
+
+Log in to MySQL:
+
+```bash
+sudo mysql -u root -p
+```
+
+Create the database and application user:
+
+```sql
+CREATE DATABASE forum;
+CREATE USER 'forum'@'localhost' IDENTIFIED BY 'YOUR_STRONG_PASSWORD';
+GRANT ALL PRIVILEGES ON forum.* TO 'forum'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+```
+
+> 🔐 **Security:** Replace `YOUR_STRONG_PASSWORD` with a strong, unique password. Never commit a real database password to GitHub.
+
+---
+
+# 5️⃣ Install PHP Repository Dependencies
 
 The following packages were installed before configuring PHP:
 
@@ -117,7 +170,7 @@ Therefore, this PPA should not be treated as a valid Ubuntu 26.04 source.
 
 ---
 
-# 5️⃣ PHP 7.4 Packages Used
+# 6️⃣ PHP 7.4 Packages Used
 
 The PHP 7.4 packages used for the Laravel application were:
 
@@ -131,7 +184,7 @@ php7.4-mbstring php7.4-xml php7.4-fpm php7.4-zip php7.4-bcmath
 
 ---
 
-# 6️⃣ Verify PHP
+# 7️⃣ Verify PHP
 
 Check PHP version:
 
@@ -159,7 +212,7 @@ sudo systemctl enable php7.4-fpm
 
 ---
 
-# 7️⃣ Check PHP-FPM Socket
+# 8️⃣ Check PHP-FPM Socket
 
 Check the PHP sockets:
 
@@ -187,7 +240,7 @@ www-data www-data
 
 ---
 
-# 8️⃣ Laravel Project Location
+# 9️⃣ Laravel Project Location
 
 The Laravel project was located under:
 
@@ -232,7 +285,7 @@ composer.json
 
 ---
 
-# 9️⃣ Check Laravel Public Directory
+# 🔟 Check Laravel Public Directory
 
 Laravel's web root is the `public` directory.
 
@@ -256,7 +309,7 @@ Therefore the Nginx document root must be:
 
 ---
 
-# 🔟 Create Nginx Virtual Host
+# 1️⃣1️⃣ Create Nginx Virtual Host
 
 Create the Nginx site configuration:
 
@@ -319,7 +372,24 @@ Enter
 
 ---
 
-# 1️⃣1️⃣ ⚠️ Important Nginx Root Path Issue
+## 🗄️ Laravel Database Configuration
+
+Update the Laravel `.env` file with the MySQL database created above:
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=forum
+DB_USERNAME=forum
+DB_PASSWORD=YOUR_STRONG_PASSWORD
+```
+
+> 🔒 Keep `.env` out of GitHub. Never commit real passwords, API keys, or `APP_KEY`.
+
+---
+
+# 1️⃣2️⃣ ⚠️ Important Nginx Root Path Issue
 
 Initially the configuration contained an incorrect path:
 
@@ -355,7 +425,7 @@ response.
 
 ---
 
-# 1️⃣2️⃣ Test Nginx Configuration
+# 1️⃣3️⃣ Test Nginx Configuration
 
 After creating/editing the configuration:
 
@@ -378,7 +448,7 @@ sudo systemctl reload nginx
 
 ---
 
-# 1️⃣3️⃣ Verify the Active Virtual Host
+# 1️⃣4️⃣ Verify the Active Virtual Host
 
 To make sure Nginx is actually using the correct configuration:
 
@@ -401,7 +471,7 @@ fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
 
 ---
 
-# 1️⃣4️⃣ Test the Application from Ubuntu
+# 1️⃣5️⃣ Test the Application from Ubuntu
 
 First test the domain:
 
@@ -446,7 +516,7 @@ This confirmed that Laravel was successfully being served through Nginx and PHP-
 
 ---
 
-# 1️⃣5️⃣ Test PHP-FPM Through Nginx
+# 1️⃣6️⃣ Test PHP-FPM Through Nginx
 
 Another useful test:
 
@@ -458,7 +528,7 @@ This verifies that the Nginx virtual host is receiving the requested Host header
 
 ---
 
-# 1️⃣6️⃣ 🌐 Configure the Domain
+# 1️⃣7️⃣ 🌐 Configure the Domain
 
 The domain used for the application:
 
@@ -486,7 +556,7 @@ PING forum.devops.com (192.168.1.191)
 
 ---
 
-# 1️⃣7️⃣ Test the Domain from the Ubuntu VM
+# 1️⃣8️⃣ Test the Domain from the Ubuntu VM
 
 ```bash
 curl -I http://forum.devops.com
@@ -502,7 +572,7 @@ At this point the application worked in the Ubuntu VM browser.
 
 ---
 
-# 1️⃣8️⃣ 🪟 Make the Domain Work from the Windows Host
+# 1️⃣9️⃣ 🪟 Make the Domain Work from the Windows Host
 
 The VM browser could open:
 
@@ -568,7 +638,7 @@ in the Windows browser.
 
 ---
 
-# 1️⃣9️⃣ Check the Windows Hosts File
+# 2️⃣0️⃣ Check the Windows Hosts File
 
 To verify the hosts file:
 
@@ -602,7 +672,7 @@ Run as administrator
 
 ---
 
-# 2️⃣0️⃣ 🛠️ Useful Troubleshooting Commands
+# 2️⃣1️⃣ 🛠️ Useful Troubleshooting Commands
 
 ## Nginx
 
@@ -666,7 +736,7 @@ curl -I http://forum.devops.com
 
 ---
 
-# 2️⃣1️⃣ 🏗️ Final Architecture
+# 2️⃣2️⃣ 🏗️ Final Architecture
 
 ```text
 Windows Host Browser
@@ -701,12 +771,13 @@ HTTP 200 OK
 
 ---
 
-# 2️⃣2️⃣ 📋 Final Configuration Summary
+# 2️⃣3️⃣ 📋 Final Configuration Summary
 
 | Component | Configuration |
 |---|---|
 | OS | Ubuntu 26.04 |
 | Web Server | Nginx |
+| Database | MySQL |
 | Nginx Version | 1.28.3 |
 | PHP | 7.4 |
 | PHP-FPM | 7.4-FPM |
@@ -721,7 +792,7 @@ HTTP 200 OK
 
 ---
 
-# 2️⃣3️⃣ 🎉 Result
+# 2️⃣4️⃣ 🎉 Result
 
 The deployment successfully achieved:
 
